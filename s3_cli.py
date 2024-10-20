@@ -30,14 +30,6 @@ def upload_file(bucket_name, file_path, s3_key):
 def list_files_with_filter(bucket_name, prefix='', pattern=''):
     s3 = boto3.client('s3')
     paginator = s3.get_paginator('list_objects_v2')
-    # regex = re.compile(pattern)
-
-    # print(f"Listing files in bucket '{bucket_name}' with prefix '{prefix}' matching pattern '{pattern}':\n")
-    # for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-    #     for obj in page.get('Contents', []):
-    #         key = obj['Key']
-    #         if regex.search(key):
-    #             print(key)
 
     try:
         regex = re.compile(pattern)
