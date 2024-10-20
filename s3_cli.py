@@ -35,6 +35,28 @@ def list_files_with_filter(bucket_name, prefix='', pattern=''):
                 print(key)
 
 
+def delete_files_with_filter(bucket_name, prefix='', pattern=''):
+    s3 = boto3.client('s3')
+    regex = re.compile(pattern)
+    objects_to_delete = []
+
+    paginator = s3.get_paginator('list_objects_v2')
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        for obj in page.get('Contents', []):
+            key = obj['Key']
+            if regex.search(key):
+                objects_to_delete.append({'Key': key})
+
+    if objects_to_delete:
+        response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+        deleted = response.get('Deleted', [])
+        print(f"Deleted {len(deleted)} objects:")
+        for obj in deleted:
+            print(obj['Key'])
+    else:
+        print("No objects matched the pattern.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='S3 CLI Tool')
     subparsers = parser.add_subparsers(dest='command')
@@ -56,6 +78,12 @@ if __name__ == "__main__":
     filter_parser.add_argument('--prefix', default='', help='Prefix to filter objects')
     filter_parser.add_argument('--pattern', required=True, help='Regex pattern to match object keys')
 
+    # Delete files command
+    delete_parser = subparsers.add_parser('delete', help='Delete files matching a regex filter')
+    delete_parser.add_argument('--bucket', required=True, help='Name of the S3 bucket')
+    delete_parser.add_argument('--prefix', default='', help='Prefix to filter objects')
+    delete_parser.add_argument('--pattern', required=True, help='Regex pattern to match object keys')
+
 
     # Parsowanie argumentów
     args = parser.parse_args()
@@ -67,6 +95,8 @@ if __name__ == "__main__":
         upload_file(args.bucket, args.file, args.key)
     elif args.command == 'list-filter':
         list_files_with_filter(args.bucket, args.prefix, args.pattern)
+    elif args.command == 'delete':
+        delete_files_with_filter(args.bucket, args.prefix, args.pattern)
     else:
         parser.print_help()
 
@@ -76,17 +106,17 @@ if __name__ == "__main__":
 ## 2. upload files start - python s3_cli.py upload --bucket developer-task2 --file lcloud_task_file.txt --key TIE-rp/lcloud_task_file.txt
 
 ## 3. list an AWS bucket files taht match a "filter" regex
-
 ## Example use
 
-## 1. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*test.*'
+## a. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*test.*'
 ## filter all files with word "upload"
 
-## 2. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*upload.*'
+## b. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*upload.*'
 ## filter all files with word "upload"
 
-## 3. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*/test.*'
+## c. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*/test.*'
 ## filter all files that start with "test"
 
-
+## 4. python s3_cli.py delete --bucket developer-task2 --prefix TIE-rp/ --pattern '.*/test.*'
+## above delete commend will delete all the files wich start with word "test"
 
