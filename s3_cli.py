@@ -58,25 +58,43 @@ def delete_files_with_filter(bucket_name, prefix='', pattern=''):
     objects_to_delete = []
 
     paginator = s3.get_paginator('list_objects_v2')
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get('Contents', []):
-            key = obj['Key']
-            if regex.search(key):
-                objects_to_delete.append({'Key': key})
+    # for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+    #     for obj in page.get('Contents', []):
+    #         key = obj['Key']
+    #         if regex.search(key):
+    #             objects_to_delete.append({'Key': key})
+    #
+    # if objects_to_delete:
+    #     response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+    #     deleted = response.get('Deleted', [])
+    #     print(f"Deleted {len(deleted)} objects:")
+    #     for obj in deleted:
+    #         print(obj['Key'])
+    # else:
+    #     print("No objects matched the pattern.")
 
-    if objects_to_delete:
-        response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
-        deleted = response.get('Deleted', [])
-        print(f"Deleted {len(deleted)} objects:")
-        for obj in deleted:
-            print(obj['Key'])
-    else:
-        print("No objects matched the pattern.")
+    try:
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+            for obj in page.get('Contents', []):
+                key = obj['Key']
+                if regex.search(key):
+                    objects_to_delete.append({'Key': key})
+
+        if objects_to_delete:
+            response = s3.delete_objects(Bucket=bucket_name, Delete={'Objects': objects_to_delete})
+            deleted = response.get('Deleted', [])
+            print(f"Deleted {len(deleted)} objects:")
+            for obj in deleted:
+                print(obj['Key'])
+        else:
+            print("No objects matched the pattern.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='S3 CLI Tool')
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(dest='command', required=True)
 
     # List files command
     list_parser = subparsers.add_parser('list', help='List all files in the S3 bucket')
