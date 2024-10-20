@@ -144,4 +144,3 @@ if __name__ == "__main__":
 
 ## 4. python s3_cli.py delete --bucket developer-task2 --prefix TIE-rp/ --pattern '.*/test.*'
 ## above delete commend will delete all the files wich start with word "test"
-
