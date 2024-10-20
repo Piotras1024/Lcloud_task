@@ -54,7 +54,13 @@ def list_files_with_filter(bucket_name, prefix='', pattern=''):
 
 def delete_files_with_filter(bucket_name, prefix='', pattern=''):
     s3 = boto3.client('s3')
-    regex = re.compile(pattern)
+    try:
+        regex = re.compile(pattern)
+    except re.error as e:
+        print(f"Invalid regex pattern: {e}")
+        return
+
+    # regex = re.compile(pattern)
     objects_to_delete = []
 
     paginator = s3.get_paginator('list_objects_v2')
