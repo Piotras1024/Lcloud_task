@@ -85,10 +85,10 @@ if __name__ == "__main__":
     delete_parser.add_argument('--pattern', required=True, help='Regex pattern to match object keys')
 
 
-    # Parsowanie argumentów
+    # Parsing arguments
     args = parser.parse_args()
 
-    # Sprawdzenie, jaka komenda została podana, i wywołanie odpowiedniej funkcji
+    # Checking what command was given and calling the appropriate function
     if args.command == 'list':
         list_files(args.bucket, args.prefix)
     elif args.command == 'upload':
