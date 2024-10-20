@@ -8,9 +8,14 @@ def list_files(bucket_name, prefix=''):
     paginator = s3.get_paginator('list_objects_v2')
 
     print(f"Listing files in bucket '{bucket_name}' with prefix '{prefix}':\n")
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get('Contents', []):
-            print(obj['Key'])
+    try:
+        found = False
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+            for obj in page.get('Contents', []):
+                print(obj['Key'])
+                found = True
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def upload_file(bucket_name, file_path, s3_key):
@@ -25,14 +30,34 @@ def upload_file(bucket_name, file_path, s3_key):
 def list_files_with_filter(bucket_name, prefix='', pattern=''):
     s3 = boto3.client('s3')
     paginator = s3.get_paginator('list_objects_v2')
-    regex = re.compile(pattern)
+    # regex = re.compile(pattern)
+
+    # print(f"Listing files in bucket '{bucket_name}' with prefix '{prefix}' matching pattern '{pattern}':\n")
+    # for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+    #     for obj in page.get('Contents', []):
+    #         key = obj['Key']
+    #         if regex.search(key):
+    #             print(key)
+
+    try:
+        regex = re.compile(pattern)
+    except re.error as e:
+        print(f"Invalid regex pattern: {e}")
+        return
 
     print(f"Listing files in bucket '{bucket_name}' with prefix '{prefix}' matching pattern '{pattern}':\n")
-    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
-        for obj in page.get('Contents', []):
-            key = obj['Key']
-            if regex.search(key):
-                print(key)
+    found = False
+    try:
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+            for obj in page.get('Contents', []):
+                key = obj['Key']
+                if regex.search(key):
+                    print(key)
+                    found = True
+        if not found:
+            print("No files matched the pattern.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def delete_files_with_filter(bucket_name, prefix='', pattern=''):
