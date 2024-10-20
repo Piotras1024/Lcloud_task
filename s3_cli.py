@@ -1,5 +1,6 @@
 import argparse
 import boto3
+import re
 
 
 def list_files(bucket_name, prefix=''):
@@ -21,6 +22,19 @@ def upload_file(bucket_name, file_path, s3_key):
         print(f"Error uploading file: {e}")
 
 
+def list_files_with_filter(bucket_name, prefix='', pattern=''):
+    s3 = boto3.client('s3')
+    paginator = s3.get_paginator('list_objects_v2')
+    regex = re.compile(pattern)
+
+    print(f"Listing files in bucket '{bucket_name}' with prefix '{prefix}' matching pattern '{pattern}':\n")
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix):
+        for obj in page.get('Contents', []):
+            key = obj['Key']
+            if regex.search(key):
+                print(key)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='S3 CLI Tool')
     subparsers = parser.add_subparsers(dest='command')
@@ -36,6 +50,13 @@ if __name__ == "__main__":
     upload_parser.add_argument('--file', required=True, help='Local file path to upload')
     upload_parser.add_argument('--key', required=True, help='S3 object key for the uploaded file')
 
+    # List files with filter command
+    filter_parser = subparsers.add_parser('list-filter', help='List files matching a regex filter')
+    filter_parser.add_argument('--bucket', required=True, help='Name of the S3 bucket')
+    filter_parser.add_argument('--prefix', default='', help='Prefix to filter objects')
+    filter_parser.add_argument('--pattern', required=True, help='Regex pattern to match object keys')
+
+
     # Parsowanie argumentów
     args = parser.parse_args()
 
@@ -44,11 +65,28 @@ if __name__ == "__main__":
         list_files(args.bucket, args.prefix)
     elif args.command == 'upload':
         upload_file(args.bucket, args.file, args.key)
+    elif args.command == 'list-filter':
+        list_files_with_filter(args.bucket, args.prefix, args.pattern)
     else:
         parser.print_help()
 
 
 
-## list_files start - python s3_cli.py list --bucket developer-task2 --prefix TIE-rp/
-## upload files start - python s3_cli.py upload --bucket developer-task2 --file lcloud_task_file.txt --key TIE-rp/lcloud_task_file.txt
+## 1. list_files start - python s3_cli.py list --bucket developer-task2 --prefix TIE-rp/
+## 2. upload files start - python s3_cli.py upload --bucket developer-task2 --file lcloud_task_file.txt --key TIE-rp/lcloud_task_file.txt
+
+## 3. list an AWS bucket files taht match a "filter" regex
+
+## Example use
+
+## 1. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*test.*'
+## filter all files with word "upload"
+
+## 2. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*upload.*'
+## filter all files with word "upload"
+
+## 3. python s3_cli.py list-filter --bucket developer-task2 --prefix TIE-rp/ --pattern '.*/test.*'
+## filter all files that start with "test"
+
+
 
